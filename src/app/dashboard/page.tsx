@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface UserProfile {
   display_name: string;
@@ -31,10 +32,23 @@ interface RecentTrack {
   played_at: string;
 }
 
+interface SearchResult {
+  id: string;
+  name: string;
+  artists: { name: string }[];
+  album: {
+    name: string;
+    images: { url: string }[];
+  };
+}
+
 export default function Dashboard() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [recentTracks, setRecentTracks] = useState<RecentTrack[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -59,6 +73,22 @@ export default function Dashboard() {
     fetchUserData();
   }, []);
 
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    setIsSearching(true);
+    try {
+      const response = await fetch(`/api/spotify/search?q=${encodeURIComponent(searchQuery)}`);
+      const data = await response.json();
+      setSearchResults(data.tracks.items);
+    } catch (error) {
+      console.error('Search error:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -73,25 +103,84 @@ export default function Dashboard() {
       <header className="bg-gray-800 p-4">
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold">Ratify</h1>
-          {userProfile && (
-            <div className="flex items-center space-x-4">
-              <span>{userProfile.display_name}</span>
-              {userProfile.images?.[0] && (
-                <Image
-                  src={userProfile.images[0].url}
-                  alt="Profile"
-                  width={40}
-                  height={40}
-                  className="rounded-full"
-                />
-              )}
-            </div>
-          )}
+          <div className="flex items-center space-x-4">
+            <Link href="/my-wall" className="text-gray-300 hover:text-white">
+              My Wall
+            </Link>
+            {userProfile && (
+              <div className="flex items-center space-x-4">
+                <span>{userProfile.display_name}</span>
+                {userProfile.images?.[0] && (
+                  <Image
+                    src={userProfile.images[0].url}
+                    alt="Profile"
+                    width={40}
+                    height={40}
+                    className="rounded-full"
+                  />
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto p-4">
+      {/* Search Bar */}
+      <div className="container mx-auto p-4">
+        <form onSubmit={handleSearch} className="mb-8">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search for songs..."
+              className="flex-1 px-4 py-2 rounded-lg bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+            <button
+              type="submit"
+              disabled={isSearching}
+              className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+            >
+              {isSearching ? 'Searching...' : 'Search'}
+            </button>
+          </div>
+        </form>
+
+        {/* Search Results */}
+        {searchResults.length > 0 && (
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">Search Results</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {searchResults.map((track) => (
+                <Link
+                  href={`/track/${track.id}`}
+                  key={track.id}
+                  className="bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors"
+                >
+                  <div className="flex items-center space-x-4">
+                    {track.album.images[0] && (
+                      <Image
+                        src={track.album.images[0].url}
+                        alt={track.name}
+                        width={60}
+                        height={60}
+                        className="rounded"
+                      />
+                    )}
+                    <div>
+                      <h3 className="font-medium">{track.name}</h3>
+                      <p className="text-gray-400 text-sm">
+                        {track.artists.map((artist) => artist.name).join(', ')}
+                      </p>
+                      <p className="text-gray-500 text-sm">{track.album.name}</p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Recently Played Section */}
         <section className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Recently Played</h2>
@@ -122,7 +211,7 @@ export default function Dashboard() {
             ))}
           </div>
         </section>
-      </main>
+      </div>
     </div>
   );
 } 
