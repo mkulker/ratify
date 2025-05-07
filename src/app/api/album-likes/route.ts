@@ -29,28 +29,28 @@ export async function GET() {
     const userData = await response.json();
     const spotifyId = userData.id;
 
-    // Get liked songs from database
-    const { data: likedSongs, error } = await supabase
-      .from('song_likes')
-      .select('song_id')
+    // Get liked albums from database
+    const { data: likedAlbums, error } = await supabase
+      .from('album_likes')
+      .select('album_id')
       .eq('spotify_id', spotifyId);
 
     if (error) {
-      console.error('Error fetching liked songs:', error);
+      console.error('Error fetching liked albums:', error);
       return NextResponse.json(
-        { error: 'Failed to fetch liked songs' },
+        { error: 'Failed to fetch liked albums' },
         { status: 500 }
       );
     }
 
-    if (!likedSongs || likedSongs.length === 0) {
+    if (!likedAlbums || likedAlbums.length === 0) {
       return NextResponse.json([]);
     }
 
-    // Fetch song details from Spotify
-    const songIds = likedSongs.map((song) => song.song_id);
-    const songsResponse = await fetch(
-      `https://api.spotify.com/v1/tracks?ids=${songIds.join(',')}`,
+    // Fetch album details from Spotify
+    const albumIds = likedAlbums.map((album) => album.album_id);
+    const albumsResponse = await fetch(
+      `https://api.spotify.com/v1/albums?ids=${albumIds.join(',')}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -58,16 +58,16 @@ export async function GET() {
       }
     );
 
-    if (!songsResponse.ok) {
-      throw new Error('Failed to fetch song details from Spotify');
+    if (!albumsResponse.ok) {
+      throw new Error('Failed to fetch album details from Spotify');
     }
 
-    const songsData = await songsResponse.json();
-    return NextResponse.json(songsData.tracks);
+    const albumsData = await albumsResponse.json();
+    return NextResponse.json(albumsData.albums);
   } catch (error) {
-    console.error('Error fetching liked songs:', error);
+    console.error('Error fetching liked albums:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch liked songs' },
+      { error: 'Failed to fetch liked albums' },
       { status: 500 }
     );
   }

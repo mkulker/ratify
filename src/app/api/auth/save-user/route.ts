@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: Request) {
   try {
@@ -13,9 +14,28 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    
+    // Create an admin client that bypasses RLS
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseServiceKey) {
+      console.error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
+
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      }
+    });
 
     // Check if user already exists
-    const { data: existingUser, error: fetchError } = await supabase
+    const { data: existingUser, error: fetchError } = await supabaseAdmin
       .from('users')
       .select('*')
       .eq('spotify_id', user.id)
@@ -29,7 +49,7 @@ export async function POST(request: Request) {
     if (existingUser) {
       console.log('Updating existing user:', existingUser.id);
       // Update existing user
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('users')
         .update({
           display_name: user.display_name,
@@ -48,11 +68,11 @@ export async function POST(request: Request) {
 
     console.log('Creating new user with spotify_id:', user.id);
     // Create new user
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('users')
       .insert({
         spotify_id: user.id,
-        display_name: user.display_name,
+        display_name: user.display_name || 'Ratify User',
         profile_image_url: user.images?.[0]?.url || null,
       })
       .select()
@@ -72,4 +92,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-} 
+}
