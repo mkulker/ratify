@@ -1,7 +1,5 @@
 'use client';
 
-import Image from "next/image";
-
 export default function Home() {
   const SPOTIFY_CLIENT_ID = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID;
   const REDIRECT_URI = process.env.NEXT_PUBLIC_REDIRECT_URI || 'http://127.0.0.1:3000/callback';

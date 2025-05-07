@@ -4,12 +4,6 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-interface UserProfile {
-  display_name: string;
-  images: { url: string }[];
-  followers: { total: number };
-}
-
 interface Artist {
   name: string;
   id: string;
@@ -43,7 +37,6 @@ interface SearchResult {
 }
 
 export default function Dashboard() {
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [recentTracks, setRecentTracks] = useState<RecentTrack[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,11 +46,6 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        // Fetch user profile
-        const profileResponse = await fetch('/api/spotify/me');
-        const profileData = await profileResponse.json();
-        setUserProfile(profileData);
-
         // Fetch recent tracks
         const tracksResponse = await fetch('/api/spotify/recent-tracks');
         const tracksData = await tracksResponse.json();

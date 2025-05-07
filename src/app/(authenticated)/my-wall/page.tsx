@@ -71,7 +71,7 @@ export default function MyWall() {
       
       {likedSongs.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-400">You haven't liked any songs yet.</p>
+          <p className="text-gray-400">You haven&apos;t liked any songs yet.</p>
           <Link 
             href="/dashboard" 
             className="mt-4 inline-block text-blue-400 hover:text-blue-300"
