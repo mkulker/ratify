@@ -26,6 +26,7 @@ export async function POST(request: Request) {
     const tokens = await tokenResponse.json();
 
     if (!tokenResponse.ok) {
+      console.error('Token response error:', tokens);
       throw new Error('Failed to get access token');
     }
 
@@ -39,6 +40,7 @@ export async function POST(request: Request) {
     const user = await userResponse.json();
 
     if (!userResponse.ok) {
+      console.error('User profile error:', user);
       throw new Error('Failed to get user profile');
     }
 
@@ -55,7 +57,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Authentication error:', error);
     return NextResponse.json(
-      { error: 'Authentication failed' },
+      { error: 'Authentication failed', details: error },
       { status: 500 }
     );
   }

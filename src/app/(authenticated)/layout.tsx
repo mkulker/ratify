@@ -1,0 +1,81 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+
+interface UserProfile {
+  display_name: string;
+  images: { url: string }[];
+}
+
+export default function AuthenticatedLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        // Fetch user profile
+        const profileResponse = await fetch('/api/spotify/me');
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          setUserProfile(profileData);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-gray-900 text-white">
+      {/* Navbar */}
+      <header className="bg-gray-800 p-4 sticky top-0 z-10 shadow-md">
+        <div className="container mx-auto flex justify-between items-center">
+          <Link href="/dashboard" className="text-2xl font-bold hover:text-green-400 transition-colors">
+            Ratify
+          </Link>
+          <div className="flex items-center space-x-4">
+            <Link href="/my-wall" className="text-gray-300 hover:text-white transition-colors">
+              My Wall
+            </Link>
+            {!loading && userProfile ? (
+              <div className="flex items-center space-x-4">
+                <span>{userProfile.display_name}</span>
+                {userProfile.images?.[0] && (
+                  <Image
+                    src={userProfile.images[0].url}
+                    alt="Profile"
+                    width={40}
+                    height={40}
+                    className="rounded-full"
+                  />
+                )}
+              </div>
+            ) : (
+              <div className="w-40 h-10 flex items-center justify-end">
+                {loading && (
+                  <div className="w-8 h-8 rounded-full border-2 border-t-transparent border-white animate-spin"></div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Page content */}
+      <main>
+        {children}
+      </main>
+    </div>
+  );
+}

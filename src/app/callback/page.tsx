@@ -23,14 +23,18 @@ export default function Callback() {
 
           if (response.ok) {
             const data = await response.json();
+            
             // Store the access token in a cookie
             Cookies.set('spotify_access_token', data.access_token, {
               expires: 1, // 1 day
               secure: process.env.NODE_ENV === 'production',
               sameSite: 'strict',
             });
+
             router.push('/dashboard');
           } else {
+            const errorData = await response.json();
+            console.error('Authentication failed:', errorData);
             router.push('/?error=authentication_failed');
           }
         } catch (error) {
