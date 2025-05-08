@@ -198,7 +198,9 @@ export default function TrackPage({
           <div className="flex-1">
             <h1 className="text-4xl font-bold mb-2">{track.name}</h1>
             <p className="text-xl text-gray-400 mb-8">
-              {track.artists.map((artist) => artist.name).join(", ")}
+              {track.artists.map((artist, index) => (
+                <span key={`${track.id}-artist-${index}`}>{artist.name}{index < track.artists.length - 1 ? ", " : ""}</span>
+              ))}
             </p>
             <p className="text-gray-500 mb-8">{track.album.name}</p>
             <button
