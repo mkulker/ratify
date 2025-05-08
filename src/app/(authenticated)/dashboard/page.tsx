@@ -70,6 +70,11 @@ export default function Dashboard() {
         const tracksData = await tracksResponse.json();
         setRecentTracks(tracksData.items || []);
 
+        // Check like status for recent tracks
+        if (tracksData.items?.length > 0) {
+          await checkTracksLikeStatus(tracksData.items.map((item: RecentTrack) => item.track));
+        }
+
         setLoading(false);
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -353,30 +358,49 @@ export default function Dashboard() {
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-4">Recently Played</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {recentTracks.map((track) => (
+          {recentTracks.map((item) => (
             <div
-              key={track.played_at}
-              className="bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors"
+              key={`${item.track.id}-${item.played_at}`}
+              className="bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors relative"
             >
-              <div className="flex items-center space-x-4">
-                {track.track.album.images[0] && (
+              <Link
+                href={`/track/${item.track.id}`}
+                className="flex items-center space-x-4"
+              >
+                {item.track.album.images[0] && (
                   <Image
-                    src={track.track.album.images[0].url}
-                    alt={track.track.name}
+                    src={item.track.album.images[0].url}
+                    alt={item.track.name}
                     width={60}
                     height={60}
                     className="rounded"
                   />
                 )}
                 <div>
-                  <h3 className="font-medium">{track.track.name}</h3>
+                  <h3 className="font-medium">{item.track.name}</h3>
                   <p className="text-gray-400 text-sm">
-                    {track.track.artists
+                    {item.track.artists
                       .map((artist) => artist.name)
                       .join(", ")}
                   </p>
+                  <p className="text-gray-500 text-sm">
+                    {item.track.album.name}
+                  </p>
                 </div>
-              </div>
+              </Link>
+              <button
+                onClick={(e) => toggleTrackLike(item.track.id, e)}
+                className="absolute top-4 right-4 p-1 rounded-full hover:bg-gray-600"
+              >
+                <Heart
+                  size={20}
+                  className={
+                    trackLikes[item.track.id]
+                      ? "fill-red-500 text-red-500"
+                      : "text-gray-400"
+                  }
+                />
+              </button>
             </div>
           ))}
         </div>
