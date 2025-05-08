@@ -211,27 +211,42 @@ export default function TrackPage({
                   : "bg-gray-700 hover:bg-gray-600"
               }`}
             >
-              <Heart className={isLiked ? "fill-current" : ""} />
-              <span>{isLiked ? "Liked" : "Like"}</span>
+              <Heart key="heart-icon" className={isLiked ? "fill-current" : ""} />
+              <span key="like-text">{isLiked ? "Liked" : "Like"}</span>
             </button>
             <button
               onClick={handleOpenReviewModal}
               className="mt-2 flex items-center space-x-2 px-4 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white"
             >
-              <Edit />
-              <span>{userReview ? "Edit Review" : "Review"}</span>
+              <Edit key="edit-icon" />
+              <span key="review-text">{userReview ? "Edit Review" : "Review"}</span>
             </button>
 
-            {/* Reviews */}
-            {friendReviews.length > 0 && (
-              <div className="mt-4 p-4 rounded-lg bg-gray-700">
+            {/* User's review */}
+            {userReview && (
+              <div key="user-review" className="mt-4 p-4 rounded-lg bg-blue-900/30">
                 <h3 className="text-lg font-semibold text-white flex items-center space-x-2">
-                  <Users className="text-blue-500" size={20} />
-                  <span>Reviews:</span>
+                  <span key="your-review-text">Your Review:</span>
+                </h3>
+                <div className="mt-2 p-3 rounded-md bg-gray-800">
+                  <p className="text-gray-300">{userReview.review}</p>
+                  <p className="text-gray-400 mt-2">
+                    Rating: {userReview.rating} stars
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Friends' Reviews */}
+            {friendReviews.length > 0 && (
+              <div key="friend-reviews" className="mt-4 p-4 rounded-lg bg-gray-700">
+                <h3 className="text-lg font-semibold text-white flex items-center space-x-2">
+                  <Users key="users-icon" className="text-blue-500" size={20} />
+                  <span key="reviews-text">Reviews:</span>
                 </h3>
                 <div className="mt-2 space-y-4">
-                  {friendReviews.map((review) => (
-                    <div key={review.id} className="p-3 rounded-md bg-gray-800">
+                  {friendReviews.map((review, index) => (
+                    <div key={review.id ? `review-${review.id}` : `review-index-${index}`} className="p-3 rounded-md bg-gray-800">
                       <p className="text-gray-300">{review.review}</p>
                       <div className="flex items-center justify-between mt-2">
                         <p className="text-gray-400">
@@ -241,6 +256,7 @@ export default function TrackPage({
                           <div className="flex items-center space-x-2">
                             {review.user.profile_image_url && (
                               <Image
+                                key={review.id ? `image-${review.id}` : `image-index-${index}`}
                                 src={review.user.profile_image_url}
                                 alt={review.user.display_name}
                                 width={24}
@@ -248,7 +264,7 @@ export default function TrackPage({
                                 className="rounded-full"
                               />
                             )}
-                            <span className="text-sm text-gray-400">
+                            <span key={review.id ? `name-${review.id}` : `name-index-${index}`} className="text-sm text-gray-400">
                               {review.user.display_name}
                             </span>
                           </div>
