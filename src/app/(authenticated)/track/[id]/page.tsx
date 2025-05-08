@@ -1,8 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useState, use } from 'react';
-import Image from 'next/image';
-import { Heart } from 'lucide-react';
+import { useEffect, useState, use } from "react";
+import Image from "next/image";
+import { Edit, Heart } from "lucide-react";
+import ReviewModal from "@/components/ReviewModal";
 
 interface Track {
   id: string;
@@ -24,22 +25,23 @@ export default function TrackPage({
   const [isLiked, setIsLiked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchTrack = async () => {
       try {
         const response = await fetch(`/api/spotify/track/${resolvedParams.id}`);
         if (!response.ok) {
-          throw new Error('Failed to fetch track');
+          throw new Error("Failed to fetch track");
         }
         const data = await response.json();
         setTrack(data);
 
         // Save song to our database
-        await fetch('/api/songs', {
-          method: 'POST',
+        await fetch("/api/songs", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             spotify_id: data.id,
@@ -50,13 +52,15 @@ export default function TrackPage({
         });
 
         // Check if track is liked
-        const likeResponse = await fetch(`/api/likes/check/${resolvedParams.id}`);
+        const likeResponse = await fetch(
+          `/api/likes/check/${resolvedParams.id}`
+        );
         if (likeResponse.ok) {
           const { isLiked } = await likeResponse.json();
           setIsLiked(isLiked);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch track');
+        setError(err instanceof Error ? err.message : "Failed to fetch track");
       } finally {
         setLoading(false);
       }
@@ -67,19 +71,29 @@ export default function TrackPage({
 
   const handleLike = async () => {
     try {
-      const method = isLiked ? 'DELETE' : 'POST';
+      const method = isLiked ? "DELETE" : "POST";
       const response = await fetch(`/api/likes/${resolvedParams.id}`, {
         method,
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to ${isLiked ? 'unlike' : 'like'} track`);
+        throw new Error(`Failed to ${isLiked ? "unlike" : "like"} track`);
       }
 
       setIsLiked(!isLiked);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update like status');
+      setError(
+        err instanceof Error ? err.message : "Failed to update like status"
+      );
     }
+  };
+
+  const handleOpenReviewModal = () => {
+    setIsReviewModalOpen(true);
+  };
+
+  const handleCloseReviewModal = () => {
+    setIsReviewModalOpen(false);
   };
 
   if (loading) {
@@ -109,35 +123,55 @@ export default function TrackPage({
   }
 
   return (
-    <div className="container mx-auto p-8">
-      <div className="flex items-start space-x-8">
-        {track.album.images[0] && (
-          <Image
-            src={track.album.images[0].url}
-            alt={track.name}
-            width={300}
-            height={300}
-            className="rounded-lg shadow-lg"
+    <div className="relative">
+      {isReviewModalOpen && (
+        <div className="fixed inset-0 backdrop-blur-md z-40"></div>
+      )}
+      <div className="container mx-auto p-8 relative z-50">
+        <div className="flex items-start space-x-8">
+          {track.album.images[0] && (
+            <Image
+              src={track.album.images[0].url}
+              alt={track.name}
+              width={300}
+              height={300}
+              className="rounded-lg shadow-lg"
+            />
+          )}
+          <div className="flex-1">
+            <h1 className="text-4xl font-bold mb-2">{track.name}</h1>
+            <p className="text-xl text-gray-400 mb-8">
+              {track.artists.map((artist) => artist.name).join(", ")}
+            </p>
+            <p className="text-gray-500 mb-8">{track.album.name}</p>
+            <button
+              onClick={handleLike}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-colors ${
+                isLiked
+                  ? "bg-red-500 hover:bg-red-600"
+                  : "bg-gray-700 hover:bg-gray-600"
+              }`}
+            >
+              <Heart className={isLiked ? "fill-current" : ""} />
+              <span>{isLiked ? "Liked" : "Like"}</span>
+            </button>
+            <button
+              onClick={handleOpenReviewModal}
+              className="mt-2 flex items-center space-x-2 px-4 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white"
+            >
+              <Edit />
+              <span>Review</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Review Modal */}
+        {isReviewModalOpen && (
+          <ReviewModal
+            trackId={resolvedParams.id}
+            onClose={handleCloseReviewModal}
           />
         )}
-        <div className="flex-1">
-          <h1 className="text-4xl font-bold mb-2">{track.name}</h1>
-          <p className="text-xl text-gray-400 mb-8">
-            {track.artists.map((artist) => artist.name).join(', ')}
-          </p>
-          <p className="text-gray-500 mb-8">{track.album.name}</p>
-          <button
-            onClick={handleLike}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-full transition-colors ${
-              isLiked
-                ? 'bg-red-500 hover:bg-red-600'
-                : 'bg-gray-700 hover:bg-gray-600'
-            }`}
-          >
-            <Heart className={isLiked ? 'fill-current' : ''} />
-            <span>{isLiked ? 'Liked' : 'Like'}</span>
-          </button>
-        </div>
       </div>
     </div>
   );

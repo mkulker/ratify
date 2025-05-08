@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 
 interface Track {
   id: string;
@@ -32,31 +32,35 @@ export default function MyWall() {
   useEffect(() => {
     const fetchLikedSongs = async () => {
       try {
-        const response = await fetch('/api/likes');
+        const response = await fetch("/api/likes");
         if (!response.ok) {
-          throw new Error('Failed to fetch liked songs');
+          throw new Error("Failed to fetch liked songs");
         }
         const data = await response.json();
         setLikedSongs(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch liked songs');
+        setError(
+          err instanceof Error ? err.message : "Failed to fetch liked songs"
+        );
       } finally {
-        setLoading(prev => ({ ...prev, songs: false }));
+        setLoading((prev) => ({ ...prev, songs: false }));
       }
     };
 
     const fetchLikedAlbums = async () => {
       try {
-        const response = await fetch('/api/album-likes');
+        const response = await fetch("/api/album-likes");
         if (!response.ok) {
-          throw new Error('Failed to fetch liked albums');
+          throw new Error("Failed to fetch liked albums");
         }
         const data = await response.json();
         setLikedAlbums(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch liked albums');
+        setError(
+          err instanceof Error ? err.message : "Failed to fetch liked albums"
+        );
       } finally {
-        setLoading(prev => ({ ...prev, albums: false }));
+        setLoading((prev) => ({ ...prev, albums: false }));
       }
     };
 
@@ -96,12 +100,14 @@ export default function MyWall() {
   return (
     <div className="container mx-auto p-8">
       <h1 className="text-2xl font-bold mb-8">My Wall</h1>
-      
+
       {!hasContent ? (
         <div className="text-center py-12">
-          <p className="text-gray-400">You haven&apos;t liked any songs or albums yet.</p>
-          <Link 
-            href="/dashboard" 
+          <p className="text-gray-400">
+            You haven&apos;t liked any songs or albums yet.
+          </p>
+          <Link
+            href="/dashboard"
             className="mt-4 inline-block text-blue-400 hover:text-blue-300"
           >
             Browse music
@@ -132,9 +138,13 @@ export default function MyWall() {
                       <div>
                         <h3 className="font-medium">{track.name}</h3>
                         <p className="text-gray-400 text-sm">
-                          {track.artists.map((artist) => artist.name).join(', ')}
+                          {track.artists
+                            .map((artist) => artist.name)
+                            .join(", ")}
                         </p>
-                        <p className="text-gray-500 text-sm">{track.album.name}</p>
+                        <p className="text-gray-500 text-sm">
+                          {track.album.name}
+                        </p>
                       </div>
                     </div>
                   </Link>
@@ -166,9 +176,14 @@ export default function MyWall() {
                       <div>
                         <h3 className="font-medium">{album.name}</h3>
                         <p className="text-gray-400 text-sm">
-                          {album.artists.map((artist) => artist.name).join(', ')}
+                          {album.artists
+                            .map((artist) => artist.name)
+                            .join(", ")}
                         </p>
-                        <p className="text-gray-500 text-sm">{album.total_tracks} tracks • {new Date(album.release_date).getFullYear()}</p>
+                        <p className="text-gray-500 text-sm">
+                          {album.total_tracks} tracks •{" "}
+                          {new Date(album.release_date).getFullYear()}
+                        </p>
                       </div>
                     </div>
                   </Link>
