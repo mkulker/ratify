@@ -31,6 +31,34 @@ export default function Callback() {
               sameSite: 'strict',
             });
 
+            // Save user data to the database
+            try {
+              const saveUserResponse = await fetch('/api/auth/save-user', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ user: data.user }),
+              });
+
+              if (saveUserResponse.ok) {
+                const userData = await saveUserResponse.json();
+                
+                // Store user ID in a cookie for future use
+                Cookies.set('user_id', userData.id, {
+                  expires: 7, // 7 days
+                  secure: process.env.NODE_ENV === 'production',
+                  sameSite: 'strict',
+                });
+                
+                console.log('User saved successfully:', userData);
+              } else {
+                console.error('Failed to save user data:', await saveUserResponse.json());
+              }
+            } catch (saveError) {
+              console.error('Error saving user data:', saveError);
+            }
+
             router.push('/dashboard');
           } else {
             const errorData = await response.json();
@@ -57,4 +85,4 @@ export default function Callback() {
       </div>
     </div>
   );
-} 
+}

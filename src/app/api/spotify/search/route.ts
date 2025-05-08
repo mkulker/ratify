@@ -23,8 +23,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Updated to search for both tracks and albums
     const response = await fetch(
-      `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=20`,
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track,album&limit=10`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
     );
 
     if (!response.ok) {
-      throw new Error('Failed to search tracks');
+      throw new Error('Failed to search Spotify');
     }
 
     const data = await response.json();
@@ -41,8 +42,8 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Search error:', error);
     return NextResponse.json(
-      { error: 'Failed to search tracks' },
+      { error: 'Failed to search Spotify' },
       { status: 500 }
     );
   }
-} 
+}

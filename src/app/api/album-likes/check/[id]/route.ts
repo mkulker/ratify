@@ -9,9 +9,9 @@ export async function GET(
   try {
     // Await the params according to Next.js requirements
     const params = await context.params;
-    const songId = params.id;
+    const albumId = params.id;
     
-    // Properly await cookies
+    // Properly await cookies() as required by Next.js
     const cookieStore = await cookies();
     const token = cookieStore.get('spotify_access_token')?.value;
 
@@ -36,29 +36,29 @@ export async function GET(
     const userData = await response.json();
     const spotifyId = userData.id;
 
-    // Check if track is liked
+    // Check if album is liked
     const { data, error } = await supabase
-      .from('song_likes')
+      .from('album_likes')
       .select('*')
       .match({
         spotify_id: spotifyId,
-        song_id: songId,
+        album_id: albumId,
       })
       .single();
 
     if (error && error.code !== 'PGRST116') {
-      console.error('Error checking like status:', error);
+      console.error('Error checking album like status:', error);
       return NextResponse.json(
-        { error: 'Failed to check like status' },
+        { error: 'Failed to check album like status' },
         { status: 500 }
       );
     }
 
     return NextResponse.json({ isLiked: !!data });
   } catch (error) {
-    console.error('Error checking like status:', error);
+    console.error('Error checking album like status:', error);
     return NextResponse.json(
-      { error: 'Failed to check like status' },
+      { error: 'Failed to check album like status' },
       { status: 500 }
     );
   }
