@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import Image from "next/image";
-import { Edit, Heart } from "lucide-react";
+import { Edit, Heart, Users } from "lucide-react";
 import ReviewModal from "@/components/ReviewModal";
 
 interface Track {
@@ -12,6 +12,19 @@ interface Track {
   album: {
     name: string;
     images: { url: string }[];
+  };
+}
+
+interface Review {
+  id: string;
+  user_id: string;
+  song_id: string;
+  review: string;
+  rating: number;
+  created_at: string;
+  user?: {
+    display_name: string; // Include user display name
+    profile_image_url: string;
   };
 }
 
@@ -26,6 +39,8 @@ export default function TrackPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [userReview, setUserReview] = useState<Review | null>(null);
+  const [friendReviews, setFriendReviews] = useState<Review[]>([]);
 
   useEffect(() => {
     const fetchTrack = async () => {
@@ -58,6 +73,31 @@ export default function TrackPage({
         if (likeResponse.ok) {
           const { isLiked } = await likeResponse.json();
           setIsLiked(isLiked);
+        }
+
+        // Fetch user's review
+        const reviewResponse = await fetch(
+          `/api/song-reviews/user/${resolvedParams.id}`
+        );
+        if (reviewResponse.ok) {
+          const reviewData = await reviewResponse.json();
+          setUserReview(reviewData);
+        } else if (reviewResponse.status === 404) {
+          // No review found, that's okay
+          setUserReview(null);
+        } else {
+          console.error("Failed to fetch user review");
+        }
+
+        // Fetch friend's reviews
+        const friendsReviewsResponse = await fetch(
+          `/api/song-reviews/${resolvedParams.id}`
+        );
+        if (friendsReviewsResponse.ok) {
+          const friendsReviewsData = await friendsReviewsResponse.json();
+          setFriendReviews(friendsReviewsData);
+        } else {
+          console.error("Failed to fetch friend reviews");
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to fetch track");
@@ -94,6 +134,23 @@ export default function TrackPage({
 
   const handleCloseReviewModal = () => {
     setIsReviewModalOpen(false);
+    // Refresh user review after closing modal
+    fetch(`/api/song-reviews/user/${resolvedParams.id}`)
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        } else if (response.status === 404) {
+          return null;
+        } else {
+          throw new Error("Failed to fetch user review");
+        }
+      })
+      .then((reviewData) => {
+        setUserReview(reviewData);
+      })
+      .catch((error) => {
+        console.error("Error refreshing review:", error);
+      });
   };
 
   if (loading) {
@@ -160,8 +217,46 @@ export default function TrackPage({
               className="mt-2 flex items-center space-x-2 px-4 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white"
             >
               <Edit />
-              <span>Review</span>
+              <span>{userReview ? "Edit Review" : "Review"}</span>
             </button>
+
+            {/* Reviews */}
+            {friendReviews.length > 0 && (
+              <div className="mt-4 p-4 rounded-lg bg-gray-700">
+                <h3 className="text-lg font-semibold text-white flex items-center space-x-2">
+                  <Users className="text-blue-500" size={20} />
+                  <span>Reviews:</span>
+                </h3>
+                <div className="mt-2 space-y-4">
+                  {friendReviews.map((review) => (
+                    <div key={review.id} className="p-3 rounded-md bg-gray-800">
+                      <p className="text-gray-300">{review.review}</p>
+                      <div className="flex items-center justify-between mt-2">
+                        <p className="text-gray-400">
+                          Rating: {review.rating} stars
+                        </p>
+                        {review.user && (
+                          <div className="flex items-center space-x-2">
+                            {review.user.profile_image_url && (
+                              <Image
+                                src={review.user.profile_image_url}
+                                alt={review.user.display_name}
+                                width={24}
+                                height={24}
+                                className="rounded-full"
+                              />
+                            )}
+                            <span className="text-sm text-gray-400">
+                              {review.user.display_name}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

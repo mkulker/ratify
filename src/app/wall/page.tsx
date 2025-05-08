@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface LikedSong {
   id: string;
@@ -23,12 +23,12 @@ export default function WallPage() {
   useEffect(() => {
     const fetchLikedSongs = async () => {
       try {
-        const response = await fetch('/api/likes');
-        if (!response.ok) throw new Error('Failed to fetch liked songs');
+        const response = await fetch("/api/likes");
+        if (!response.ok) throw new Error("Failed to fetch liked songs");
         const data = await response.json();
         setLikedSongs(data);
       } catch (error) {
-        console.error('Error fetching liked songs:', error);
+        console.error("Error fetching liked songs:", error);
       } finally {
         setLoading(false);
       }
@@ -94,7 +94,7 @@ export default function WallPage() {
                     {song.name}
                   </h3>
                   <p className="text-gray-400 text-sm truncate">
-                    {song.artists.map((artist) => artist.name).join(', ')}
+                    {song.artists.map((artist) => artist.name).join(", ")}
                   </p>
                   <p className="text-gray-500 text-sm truncate">
                     {song.album.name}
@@ -107,4 +107,4 @@ export default function WallPage() {
       </div>
     </div>
   );
-} 
+}

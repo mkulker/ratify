@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Heart } from 'lucide-react';
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { Heart } from "lucide-react";
 
 interface Artist {
   name: string;
@@ -38,7 +38,7 @@ interface TrackSearchResult {
     name: string;
     images: { url: string }[];
   };
-  type: 'track';
+  type: "track";
 }
 
 interface AlbumSearchResult {
@@ -47,7 +47,7 @@ interface AlbumSearchResult {
   artists: { name: string; id: string }[];
   images: { url: string }[];
   release_date: string;
-  type: 'album';
+  type: "album";
 }
 
 type SearchResult = TrackSearchResult | AlbumSearchResult;
@@ -55,7 +55,7 @@ type SearchResult = TrackSearchResult | AlbumSearchResult;
 export default function Dashboard() {
   const [recentTracks, setRecentTracks] = useState<RecentTrack[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [trackResults, setTrackResults] = useState<TrackSearchResult[]>([]);
   const [albumResults, setAlbumResults] = useState<AlbumSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -66,13 +66,13 @@ export default function Dashboard() {
     const fetchUserData = async () => {
       try {
         // Fetch recent tracks
-        const tracksResponse = await fetch('/api/spotify/recent-tracks');
+        const tracksResponse = await fetch("/api/spotify/recent-tracks");
         const tracksData = await tracksResponse.json();
         setRecentTracks(tracksData.items || []);
 
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error("Error fetching user data:", error);
         setLoading(false);
       }
     };
@@ -86,30 +86,36 @@ export default function Dashboard() {
 
     setIsSearching(true);
     try {
-      const response = await fetch(`/api/spotify/search?q=${encodeURIComponent(searchQuery)}`);
+      const response = await fetch(
+        `/api/spotify/search?q=${encodeURIComponent(searchQuery)}`
+      );
       const data = await response.json();
-      
+
       // Separate tracks and albums
-      setTrackResults(data.tracks?.items.map((item: any) => ({
-        ...item,
-        type: 'track'
-      })) || []);
-      
-      setAlbumResults(data.albums?.items.map((item: any) => ({
-        ...item,
-        type: 'album'
-      })) || []);
+      setTrackResults(
+        data.tracks?.items.map((item: any) => ({
+          ...item,
+          type: "track",
+        })) || []
+      );
+
+      setAlbumResults(
+        data.albums?.items.map((item: any) => ({
+          ...item,
+          type: "album",
+        })) || []
+      );
 
       // Check like status for tracks and albums
       if (data.tracks?.items?.length > 0) {
         await checkTracksLikeStatus(data.tracks.items);
       }
-      
+
       if (data.albums?.items?.length > 0) {
         await checkAlbumsLikeStatus(data.albums.items);
       }
     } catch (error) {
-      console.error('Search error:', error);
+      console.error("Search error:", error);
     } finally {
       setIsSearching(false);
     }
@@ -118,80 +124,84 @@ export default function Dashboard() {
   const checkTracksLikeStatus = async (tracks: any[]) => {
     try {
       const likes: Record<string, boolean> = {};
-      
-      await Promise.all(tracks.map(async (track) => {
-        const response = await fetch(`/api/likes/check/${track.id}`);
-        if (response.ok) {
-          const data = await response.json();
-          likes[track.id] = data.isLiked;
-        }
-      }));
-      
+
+      await Promise.all(
+        tracks.map(async (track) => {
+          const response = await fetch(`/api/likes/check/${track.id}`);
+          if (response.ok) {
+            const data = await response.json();
+            likes[track.id] = data.isLiked;
+          }
+        })
+      );
+
       setTrackLikes(likes);
     } catch (error) {
-      console.error('Error checking track likes:', error);
+      console.error("Error checking track likes:", error);
     }
   };
 
   const checkAlbumsLikeStatus = async (albums: any[]) => {
     try {
       const likes: Record<string, boolean> = {};
-      
-      await Promise.all(albums.map(async (album) => {
-        const response = await fetch(`/api/album-likes/check/${album.id}`);
-        if (response.ok) {
-          const data = await response.json();
-          likes[album.id] = data.isLiked;
-        }
-      }));
-      
+
+      await Promise.all(
+        albums.map(async (album) => {
+          const response = await fetch(`/api/album-likes/check/${album.id}`);
+          if (response.ok) {
+            const data = await response.json();
+            likes[album.id] = data.isLiked;
+          }
+        })
+      );
+
       setAlbumLikes(likes);
     } catch (error) {
-      console.error('Error checking album likes:', error);
+      console.error("Error checking album likes:", error);
     }
   };
 
   const toggleTrackLike = async (trackId: string, event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    
+
     try {
       const isLiked = trackLikes[trackId];
       const url = `/api/likes/${trackId}`;
-      const method = isLiked ? 'DELETE' : 'POST';
-      
+      const method = isLiked ? "DELETE" : "POST";
+
       const response = await fetch(url, { method });
-      
+
       if (response.ok) {
-        setTrackLikes(prev => ({
+        setTrackLikes((prev) => ({
           ...prev,
-          [trackId]: !isLiked
+          [trackId]: !isLiked,
         }));
       }
     } catch (error) {
-      console.error('Error toggling track like:', error);
+      console.error("Error toggling track like:", error);
     }
   };
 
   const toggleAlbumLike = async (albumId: string, event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    
+
     try {
       const isLiked = albumLikes[albumId];
       const url = `/api/album-likes/${albumId}`;
-      const method = isLiked ? 'DELETE' : 'POST';
-      
+      const method = isLiked ? "DELETE" : "POST";
+
       const response = await fetch(url, { method });
-      
+
       if (response.ok) {
-        setAlbumLikes(prev => ({
+        setAlbumLikes((prev) => ({
           ...prev,
-          [albumId]: !isLiked
+          [albumId]: !isLiked,
         }));
       }
     } catch (error) {
-      console.error('Error toggling album like:', error);
+      console.error("Error toggling album like:", error);
     }
   };
 
@@ -220,7 +230,7 @@ export default function Dashboard() {
             disabled={isSearching}
             className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
           >
-            {isSearching ? 'Searching...' : 'Search'}
+            {isSearching ? "Searching..." : "Search"}
           </button>
         </div>
       </form>
@@ -233,8 +243,8 @@ export default function Dashboard() {
               <h2 className="text-xl font-semibold mb-4">Songs</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {trackResults.map((track) => (
-                  <div 
-                    key={track.id} 
+                  <div
+                    key={track.id}
                     className="bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors relative"
                   >
                     <Link
@@ -253,18 +263,26 @@ export default function Dashboard() {
                       <div>
                         <h3 className="font-medium">{track.name}</h3>
                         <p className="text-gray-400 text-sm">
-                          {track.artists.map((artist) => artist.name).join(', ')}
+                          {track.artists
+                            .map((artist) => artist.name)
+                            .join(", ")}
                         </p>
-                        <p className="text-gray-500 text-sm">{track.album.name}</p>
+                        <p className="text-gray-500 text-sm">
+                          {track.album.name}
+                        </p>
                       </div>
                     </Link>
-                    <button 
+                    <button
                       onClick={(e) => toggleTrackLike(track.id, e)}
                       className="absolute top-4 right-4 p-1 rounded-full hover:bg-gray-600"
                     >
-                      <Heart 
-                        size={20} 
-                        className={trackLikes[track.id] ? "fill-red-500 text-red-500" : "text-gray-400"}
+                      <Heart
+                        size={20}
+                        className={
+                          trackLikes[track.id]
+                            ? "fill-red-500 text-red-500"
+                            : "text-gray-400"
+                        }
                       />
                     </button>
                   </div>
@@ -279,8 +297,8 @@ export default function Dashboard() {
               <h2 className="text-xl font-semibold mb-4">Albums</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {albumResults.map((album) => (
-                  <div 
-                    key={album.id} 
+                  <div
+                    key={album.id}
                     className="bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors relative"
                   >
                     <Link
@@ -299,7 +317,9 @@ export default function Dashboard() {
                       <div>
                         <h3 className="font-medium">{album.name}</h3>
                         <p className="text-gray-400 text-sm">
-                          {album.artists.map((artist) => artist.name).join(', ')}
+                          {album.artists
+                            .map((artist) => artist.name)
+                            .join(", ")}
                         </p>
                         {album.release_date && (
                           <p className="text-gray-500 text-sm">
@@ -308,13 +328,17 @@ export default function Dashboard() {
                         )}
                       </div>
                     </Link>
-                    <button 
+                    <button
                       onClick={(e) => toggleAlbumLike(album.id, e)}
                       className="absolute top-4 right-4 p-1 rounded-full hover:bg-gray-600"
                     >
-                      <Heart 
-                        size={20} 
-                        className={albumLikes[album.id] ? "fill-red-500 text-red-500" : "text-gray-400"}
+                      <Heart
+                        size={20}
+                        className={
+                          albumLikes[album.id]
+                            ? "fill-red-500 text-red-500"
+                            : "text-gray-400"
+                        }
                       />
                     </button>
                   </div>
@@ -347,7 +371,9 @@ export default function Dashboard() {
                 <div>
                   <h3 className="font-medium">{track.track.name}</h3>
                   <p className="text-gray-400 text-sm">
-                    {track.track.artists.map((artist) => artist.name).join(', ')}
+                    {track.track.artists
+                      .map((artist) => artist.name)
+                      .join(", ")}
                   </p>
                 </div>
               </div>

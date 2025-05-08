@@ -38,7 +38,7 @@ export async function POST(
       );
     }
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("song_ratings") // Updated table name
       .insert({
         user_id: userId, // Use userId from cookies
@@ -73,12 +73,19 @@ export async function GET(
   context: { params: { id: string } }
 ): Promise<NextResponse> {
   try {
-    // Await context.params
-    const { id } = await context.params; // Get songId from the dynamic route
+    const { id } = context.params; // Get songId from the dynamic route
 
     const { data: ratings, error } = await supabase
       .from("song_ratings") // Updated table name
-      .select("review, rating, created_at, user_id")
+      .select(
+        `
+        review,
+        rating,
+        created_at,
+        user_id,
+        user:users (display_name, profile_image_url)
+      `
+      )
       .eq("song_id", id);
 
     if (error) {
@@ -94,6 +101,59 @@ export async function GET(
     console.error("Error fetching ratings:", error);
     return NextResponse.json(
       { error: "Failed to fetch ratings" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  context: { params: { id: string } }
+): Promise<NextResponse> {
+  try {
+    const { id } = context.params; // Get songId from the dynamic route
+    const cookieStore = cookies();
+    const userId = (await cookieStore).get("user_id")?.value;
+
+    console.log("PATCH called");
+    console.log("id:", id);
+    console.log("userId:", userId);
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { review, rating } = await request.json();
+
+    console.log("review:", review);
+    console.log("rating:", rating);
+
+    const { data, error } = await supabase
+      .from("song_ratings")
+      .update({ review, rating })
+      .eq("song_id", id)
+      .eq("user_id", userId)
+      .select();
+
+    if (error) {
+      console.error("Error updating rating:", error);
+      return NextResponse.json(
+        { error: "Failed to update rating" },
+        { status: 500 }
+      );
+    }
+
+    if (!data || data.length === 0) {
+      return NextResponse.json({ error: "Review not found" }, { status: 404 });
+    }
+
+    console.log("data:", data); // Log the returned data
+
+    return NextResponse.json({ success: true, review: data[0] });
+  } catch (error) {
+    console.error("Error updating rating:", error);
+    return NextResponse.json(
+      { error: "Failed to update rating" },
       { status: 500 }
     );
   }
