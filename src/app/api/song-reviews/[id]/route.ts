@@ -25,6 +25,10 @@ export async function POST(
     const { review, rating } = await request.json();
     console.log("Request body:", { review, rating });
 
+    // Ensure rating is a valid integer between 1 and 10
+    const validatedRating = Math.min(Math.max(Math.round(Number(rating)), 1), 10);
+    console.log("Validated rating:", validatedRating);
+
     // Correctly handle cookies - await the cookies function
     const cookieStore = await cookies();
     const userId = cookieStore.get("user_id")?.value;
@@ -43,8 +47,8 @@ export async function POST(
       .insert({
         user_id: userId,
         song_id: id,
-        review,
-        rating,
+        review: review || "", // Ensure review is never null
+        rating: validatedRating, // Use the validated rating (1-10 scale)
       })
       .select();
 
@@ -129,12 +133,19 @@ export async function PATCH(
 
     const { review, rating } = await request.json();
 
+    // Ensure rating is a valid integer between 1 and 10
+    const validatedRating = Math.min(Math.max(Math.round(Number(rating)), 1), 10);
+    
     console.log("review:", review);
-    console.log("rating:", rating);
+    console.log("original rating:", rating);
+    console.log("validated rating:", validatedRating);
 
     const { data, error } = await supabase
       .from("song_ratings")
-      .update({ review, rating })
+      .update({ 
+        review: review || "", 
+        rating: validatedRating // Use the validated rating (1-10 scale)
+      })
       .eq("song_id", id)
       .eq("user_id", userId)
       .select();

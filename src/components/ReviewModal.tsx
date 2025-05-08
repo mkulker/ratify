@@ -1,16 +1,47 @@
 import React, { useState, useEffect } from "react";
+import Rating from "@mui/material/Rating";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import StarIcon from "@mui/icons-material/Star";
 
 interface ReviewModalProps {
   trackId: string;
   onClose: () => void;
 }
 
+// Helper functions to convert between UI stars and DB integer values
+const starsToDatabaseValue = (stars: number): number => {
+  // Convert from UI stars (0.5-5) to database integers (1-10)
+  // 0.5 stars -> 1, 1 star -> 2, 1.5 stars -> 3, etc.
+  return Math.round(stars * 2);
+};
+
+const databaseValueToStars = (dbValue: number): number => {
+  // Convert from database integers (1-10) to UI stars (0.5-5)
+  return dbValue / 2;
+};
+
 const ReviewModal = ({ trackId, onClose }: ReviewModalProps) => {
   const [reviewText, setReviewText] = useState("");
-  const [rating, setRating] = useState(5);
+  const [starRating, setStarRating] = useState<number>(2.5); // Default to 2.5 stars (5 in DB)
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [hover, setHover] = useState(-1);
+
+  // Custom labels for the rating values (0.5-5 with half-star precision)
+  const labels: { [index: string]: string } = {
+    0.5: "0.5 - Terrible",
+    1: "1 - Very Poor",
+    1.5: "1.5 - Poor",
+    2: "2 - Below Average",
+    2.5: "2.5 - Average",
+    3: "3 - Good",
+    3.5: "3.5 - Very Good",
+    4: "4 - Excellent",
+    4.5: "4.5 - Outstanding", 
+    5: "5 - Masterpiece",
+  };
 
   useEffect(() => {
     const fetchExistingReview = async () => {
@@ -18,11 +49,14 @@ const ReviewModal = ({ trackId, onClose }: ReviewModalProps) => {
         const response = await fetch(`/api/song-reviews/user/${trackId}`);
         if (response.ok) {
           const reviewData = await response.json();
-          setReviewText(reviewData.review);
-          setRating(reviewData.rating);
+          setReviewText(reviewData.review || "");
+          // Convert from database value (1-10) to stars (0.5-5)
+          setStarRating(databaseValueToStars(reviewData.rating));
           setIsEditMode(true);
         } else if (response.status === 404) {
+          // Handle 404 - user hasn't reviewed this song yet
           setIsEditMode(false);
+          setStarRating(2.5); // Default to 2.5 stars
         } else {
           console.error("Failed to fetch existing review");
           setError("Failed to fetch existing review");
@@ -39,33 +73,51 @@ const ReviewModal = ({ trackId, onClose }: ReviewModalProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("handleSubmit called");
-    console.log("isEditMode:", isEditMode);
-    console.log("reviewText:", reviewText);
-    console.log("rating:", rating);
+    
+    // Ensure rating is at least 0.5 stars (1 in DB)
+    if (starRating <= 0) {
+      setError("Please select a star rating");
+      return;
+    }
+    
     try {
       const method = isEditMode ? "PATCH" : "POST";
+      const dbRating = starsToDatabaseValue(starRating);
+      
       console.log("method:", method);
+      console.log("Star rating:", starRating, "DB value:", dbRating);
+      
       const response = await fetch(`/api/song-reviews/${trackId}`, {
         method: method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ review: reviewText, rating }),
+        body: JSON.stringify({ 
+          review: reviewText || "", 
+          rating: dbRating // Send the integer value (1-10) to the backend
+        }),
       });
 
-      console.log("response.status:", response.status); // Log the status code
+      console.log("response.status:", response.status);
 
       if (!response.ok) {
         throw new Error("Failed to submit review");
       }
 
       setSuccess(true);
-      setError(null); // Clear any previous errors
+      setError(null);
       setTimeout(() => {
         setSuccess(false);
         onClose();
       }, 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to submit review");
-      setSuccess(false); // Clear success message if there's an error
+      setSuccess(false);
+    }
+  };
+  
+  // Handle UI rating change
+  const handleRatingChange = (_event: React.SyntheticEvent, newValue: number | null) => {
+    if (newValue !== null) {
+      setStarRating(newValue);
     }
   };
 
@@ -85,21 +137,60 @@ const ReviewModal = ({ trackId, onClose }: ReviewModalProps) => {
           <textarea
             value={reviewText}
             onChange={(e) => setReviewText(e.target.value)}
-            placeholder="Write your review..."
+            placeholder="Write your review (optional)..."
             className="w-full p-2 border rounded mb-4 bg-gray-700 text-white"
-            required
           />
-          <select
-            value={rating}
-            onChange={(e) => setRating(Number(e.target.value))}
-            className="w-full p-2 border rounded mb-4 bg-gray-700 text-white"
-          >
-            {[1, 2, 3, 4, 5].map((star) => (
-              <option key={star} value={star}>
-                {star} Star{star > 1 && "s"}
-              </option>
-            ))}
-          </select>
+          
+          <div className="mb-4">
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
+              <Typography 
+                component="legend" 
+                sx={{ 
+                  mb: 1, 
+                  fontSize: '1rem', 
+                  color: '#e5e7eb',
+                  fontWeight: 'bold' 
+                }}
+              >
+                Your Rating
+              </Typography>
+              
+              <Rating
+                name="track-rating"
+                value={starRating}
+                precision={0.5}
+                max={5}
+                onChange={handleRatingChange}
+                onChangeActive={(event, newHover) => {
+                  setHover(newHover);
+                }}
+                emptyIcon={<StarIcon style={{ opacity: 0.55, color: 'gray' }} fontSize="inherit" />}
+                sx={{ 
+                  fontSize: '1.5rem',
+                  '& .MuiRating-iconFilled': {
+                    color: '#faaf00',
+                  },
+                  '& .MuiRating-iconHover': {
+                    color: '#ffb521',
+                  },
+                }}
+              />
+              
+              <Typography 
+                component="legend" 
+                sx={{ 
+                  mt: 1, 
+                  fontSize: '0.875rem', 
+                  color: '#e5e7eb' 
+                }}
+              >
+                {hover !== -1 
+                  ? labels[hover] || `${hover} Stars`
+                  : labels[starRating] || `${starRating} Stars`}
+              </Typography>
+            </Box>
+          </div>
+          
           <div className="flex justify-end space-x-4">
             <button
               type="button"

@@ -4,6 +4,8 @@ import { useEffect, useState, use } from "react";
 import Image from "next/image";
 import { Edit, Heart, Users } from "lucide-react";
 import ReviewModal from "@/components/ReviewModal";
+import Rating from '@mui/material/Rating';
+import Box from '@mui/material/Box';
 
 interface Track {
   id: string;
@@ -27,6 +29,12 @@ interface Review {
     profile_image_url: string;
   };
 }
+
+// Helper function to convert integer rating to the correct star display value
+const convertRatingToStars = (rating: number): number => {
+  // Convert 1-10 scale to 0.5-5 star scale
+  return rating / 2;
+};
 
 export default function TrackPage({
   params,
@@ -230,9 +238,20 @@ export default function TrackPage({
                 </h3>
                 <div className="mt-2 p-3 rounded-md bg-gray-800">
                   <p className="text-gray-300">{userReview.review}</p>
-                  <p className="text-gray-400 mt-2">
-                    Rating: {userReview.rating} stars
-                  </p>
+                  <Box component="fieldset" borderColor="transparent" sx={{ mt: 1 }}>
+                    <Rating 
+                      name="user-rating-read-only" 
+                      value={convertRatingToStars(userReview.rating)} 
+                      precision={0.5}
+                      max={5}
+                      readOnly 
+                      sx={{ 
+                        '& .MuiRating-iconFilled': {
+                          color: '#faaf00',
+                        }
+                      }}
+                    />
+                  </Box>
                 </div>
               </div>
             )}
@@ -249,9 +268,20 @@ export default function TrackPage({
                     <div key={review.id ? `review-${review.id}` : `review-index-${index}`} className="p-3 rounded-md bg-gray-800">
                       <p className="text-gray-300">{review.review}</p>
                       <div className="flex items-center justify-between mt-2">
-                        <p className="text-gray-400">
-                          Rating: {review.rating} stars
-                        </p>
+                        <Box component="fieldset" borderColor="transparent">
+                          <Rating 
+                            name={`friend-rating-${index}`} 
+                            value={convertRatingToStars(review.rating)} 
+                            precision={0.5}
+                            max={5}
+                            readOnly 
+                            sx={{ 
+                              '& .MuiRating-iconFilled': {
+                                color: '#faaf00',
+                              }
+                            }}
+                          />
+                        </Box>
                         {review.user && (
                           <div className="flex items-center space-x-2">
                             {review.user.profile_image_url && (
