@@ -21,7 +21,6 @@ export default function AuthenticatedLayout({
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        // Fetch user profile
         const profileResponse = await fetch('/api/spotify/me');
         if (profileResponse.ok) {
           const profileData = await profileResponse.json();
@@ -43,11 +42,14 @@ export default function AuthenticatedLayout({
       <header className="bg-gray-800 p-4 sticky top-0 z-10 shadow-md">
         <div className="container mx-auto flex flex-col md:flex-row md:justify-between md:items-center gap-4">
           <div className="flex justify-between items-center">
-            <Link href="/dashboard" className="text-2xl font-bold hover:text-green-400 transition-colors">
+            <Link
+              href="/dashboard"
+              className="text-2xl font-bold hover:text-green-400 transition-colors"
+            >
               Ratify
             </Link>
             <div className="md:hidden flex items-center space-x-4">
-              {!loading && userProfile && userProfile.images?.[0] && (
+              {!loading && userProfile?.images?.[0] && (
                 <Image
                   src={userProfile.images[0].url}
                   alt="Profile"
@@ -58,15 +60,25 @@ export default function AuthenticatedLayout({
               )}
             </div>
           </div>
-          
+
           {/* User Search */}
           <div className="w-full md:max-w-md">
             <UserSearch />
           </div>
-          
+
+          {/* Desktop Nav */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link href="/my-wall" className="text-gray-300 hover:text-white transition-colors">
+            <Link
+              href="/my-wall"
+              className="text-gray-300 hover:text-white transition-colors"
+            >
               My Wall
+            </Link>
+            <Link
+              href="/friend-activity"
+              className="text-gray-300 hover:text-white transition-colors"
+            >
+              Friend Activity
             </Link>
             {!loading && userProfile ? (
               <div className="flex items-center space-x-4">
@@ -89,11 +101,20 @@ export default function AuthenticatedLayout({
               </div>
             )}
           </div>
-          
+
           {/* Mobile Nav Links */}
           <div className="flex md:hidden justify-around pt-2">
-            <Link href="/my-wall" className="text-gray-300 hover:text-white transition-colors">
+            <Link
+              href="/my-wall"
+              className="text-gray-300 hover:text-white transition-colors"
+            >
               My Wall
+            </Link>
+            <Link
+              href="/friend-activity"
+              className="text-gray-300 hover:text-white transition-colors"
+            >
+              Friend Activity
             </Link>
             {!loading && userProfile && (
               <span className="text-gray-300">{userProfile.display_name}</span>
@@ -103,9 +124,7 @@ export default function AuthenticatedLayout({
       </header>
 
       {/* Page content */}
-      <main>
-        {children}
-      </main>
+      <main>{children}</main>
     </div>
   );
 }
