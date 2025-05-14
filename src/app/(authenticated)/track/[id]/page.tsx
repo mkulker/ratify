@@ -4,6 +4,8 @@ import { useEffect, useState, use } from "react";
 import Image from "next/image";
 import { Edit, Heart, Users } from "lucide-react";
 import ReviewModal from "@/components/ReviewModal";
+import Rating from '@mui/material/Rating';
+import Box from '@mui/material/Box';
 
 interface Track {
   id: string;
@@ -27,6 +29,12 @@ interface Review {
     profile_image_url: string;
   };
 }
+
+// Helper function to convert integer rating to the correct star display value
+const convertRatingToStars = (rating: number): number => {
+  // Convert 1-10 scale to 0.5-5 star scale
+  return rating / 2;
+};
 
 export default function TrackPage({
   params,
@@ -198,7 +206,9 @@ export default function TrackPage({
           <div className="flex-1">
             <h1 className="text-4xl font-bold mb-2">{track.name}</h1>
             <p className="text-xl text-gray-400 mb-8">
-              {track.artists.map((artist) => artist.name).join(", ")}
+              {track.artists.map((artist, index) => (
+                <span key={`${track.id}-artist-${index}`}>{artist.name}{index < track.artists.length - 1 ? ", " : ""}</span>
+              ))}
             </p>
             <p className="text-gray-500 mb-8">{track.album.name}</p>
             <button
@@ -209,36 +219,74 @@ export default function TrackPage({
                   : "bg-gray-700 hover:bg-gray-600"
               }`}
             >
-              <Heart className={isLiked ? "fill-current" : ""} />
-              <span>{isLiked ? "Liked" : "Like"}</span>
+              <Heart key="heart-icon" className={isLiked ? "fill-current" : ""} />
+              <span key="like-text">{isLiked ? "Liked" : "Like"}</span>
             </button>
             <button
               onClick={handleOpenReviewModal}
               className="mt-2 flex items-center space-x-2 px-4 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white"
             >
-              <Edit />
-              <span>{userReview ? "Edit Review" : "Review"}</span>
+              <Edit key="edit-icon" />
+              <span key="review-text">{userReview ? "Edit Review" : "Review"}</span>
             </button>
 
-            {/* Reviews */}
-            {friendReviews.length > 0 && (
-              <div className="mt-4 p-4 rounded-lg bg-gray-700">
+            {/* User's review */}
+            {userReview && (
+              <div key="user-review" className="mt-4 p-4 rounded-lg bg-blue-900/30">
                 <h3 className="text-lg font-semibold text-white flex items-center space-x-2">
-                  <Users className="text-blue-500" size={20} />
-                  <span>Reviews:</span>
+                  <span key="your-review-text">Your Review:</span>
+                </h3>
+                <div className="mt-2 p-3 rounded-md bg-gray-800">
+                  <p className="text-gray-300">{userReview.review}</p>
+                  <Box component="fieldset" borderColor="transparent" sx={{ mt: 1 }}>
+                    <Rating 
+                      name="user-rating-read-only" 
+                      value={convertRatingToStars(userReview.rating)} 
+                      precision={0.5}
+                      max={5}
+                      readOnly 
+                      sx={{ 
+                        '& .MuiRating-iconFilled': {
+                          color: '#faaf00',
+                        }
+                      }}
+                    />
+                  </Box>
+                </div>
+              </div>
+            )}
+
+            {/* Friends' Reviews */}
+            {friendReviews.length > 0 && (
+              <div key="friend-reviews" className="mt-4 p-4 rounded-lg bg-gray-700">
+                <h3 className="text-lg font-semibold text-white flex items-center space-x-2">
+                  <Users key="users-icon" className="text-blue-500" size={20} />
+                  <span key="reviews-text">Reviews:</span>
                 </h3>
                 <div className="mt-2 space-y-4">
-                  {friendReviews.map((review) => (
-                    <div key={review.id} className="p-3 rounded-md bg-gray-800">
+                  {friendReviews.map((review, index) => (
+                    <div key={review.id ? `review-${review.id}` : `review-index-${index}`} className="p-3 rounded-md bg-gray-800">
                       <p className="text-gray-300">{review.review}</p>
                       <div className="flex items-center justify-between mt-2">
-                        <p className="text-gray-400">
-                          Rating: {review.rating} stars
-                        </p>
+                        <Box component="fieldset" borderColor="transparent">
+                          <Rating 
+                            name={`friend-rating-${index}`} 
+                            value={convertRatingToStars(review.rating)} 
+                            precision={0.5}
+                            max={5}
+                            readOnly 
+                            sx={{ 
+                              '& .MuiRating-iconFilled': {
+                                color: '#faaf00',
+                              }
+                            }}
+                          />
+                        </Box>
                         {review.user && (
                           <div className="flex items-center space-x-2">
                             {review.user.profile_image_url && (
                               <Image
+                                key={review.id ? `image-${review.id}` : `image-index-${index}`}
                                 src={review.user.profile_image_url}
                                 alt={review.user.display_name}
                                 width={24}
@@ -246,7 +294,7 @@ export default function TrackPage({
                                 className="rounded-full"
                               />
                             )}
-                            <span className="text-sm text-gray-400">
+                            <span key={review.id ? `name-${review.id}` : `name-index-${index}`} className="text-sm text-gray-400">
                               {review.user.display_name}
                             </span>
                           </div>
