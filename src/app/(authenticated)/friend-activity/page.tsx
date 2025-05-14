@@ -147,7 +147,7 @@ export default function FriendActivityPage() {
                   <h3 className="font-medium">{entry.name}</h3>
                   <p className="text-gray-400 text-sm">{entry.artist}</p>
                   <p className="text-gray-500 text-sm">
-                    ⭐ {entry.rating}/5 •{" "}
+                    ⭐ {entry.rating/2}/5 •{" "}
                     {new Date(entry.created_at).toLocaleDateString()}
                   </p>
                   {entry.review && (
